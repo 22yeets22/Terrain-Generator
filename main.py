@@ -2,33 +2,8 @@ import pygame
 from perlin_noise import PerlinNoise
 import math
 
-# Constants
-WIDTH = 600
-NOISE_CHANGE = 60
-TILE_SIZE_DEFAULT = 25
-MOVE_DIST = 0.3
-FPS = 30
+from constants import *
 
-# Biome definitions with ideal center points (heat, dryness)
-BIOMES = {
-    "desert": {"center": (0.225, 0.3)},
-    "grasslands": {"center": (0.05, 0.1)},
-    "rainforest": {"center": (-0.075, -0.425)},
-    "arctic": {"center": (-0.5, 0.0)},
-    "water": {"height": -0.25},
-    "mountain": {"height": 0.325},
-    "snow": {"height": 0.7}
-}
-
-BIOME_COLORS = {
-    "desert": (255, 220, 170),
-    "grasslands": (62, 220, 59),
-    "rainforest": (0, 128, 0),
-    "arctic": (200, 200, 255),
-    "water": (0, 0, 255),
-    "mountain": (140, 90, 80),
-    "snow": (255, 250, 250)
-}
 
 def get_seed(raw_seed):
     """Convert raw seed input into a numeric seed."""
@@ -42,8 +17,8 @@ def generate_noise(seed):
     return {
         "base1": PerlinNoise(octaves=3, seed=seed),
         "base2": PerlinNoise(octaves=8, seed=seed),
-        "heatmap": PerlinNoise(octaves=0.75, seed=seed),
-        "wetmap": PerlinNoise(octaves=0.6, seed=seed),
+        "heatmap": PerlinNoise(octaves=1, seed=seed),
+        "wetmap": PerlinNoise(octaves=0.8, seed=seed),
     }
 
 
@@ -99,35 +74,21 @@ def blend_colors(weights):
     return (int(r), int(g), int(b))
 
 
-def handle_input(keys, velocity, tile_size, delta_time):
-    """Process user input for movement and zoom with smooth scrolling."""
-    acceleration = 0.1  # Adjust the acceleration for smooth scrolling
-    deceleration = 0.9  # Slow down the movement gradually
-
-    # Handle movement based on key presses
+def handle_input(keys, velocity, tile_size):
+    """Process user input for movement and zoom."""
     if keys[pygame.K_UP] or keys[pygame.K_w]:
-        velocity.y -= acceleration
+        velocity.y -= MOVE_DIST
     if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        velocity.y += acceleration
+        velocity.y += MOVE_DIST
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        velocity.x -= acceleration
+        velocity.x -= MOVE_DIST
     if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        velocity.x += acceleration
-
-    # Apply friction (deceleration) to smooth out the movement
-    velocity.x *= deceleration
-    velocity.y *= deceleration
-
-    # Handle zoom
+        velocity.x += MOVE_DIST
     if keys[pygame.K_q] and tile_size >= 19:
         tile_size -= 2
     if keys[pygame.K_e] and tile_size <= 49:
         tile_size += 2
-
-    # Apply movement based on velocity and delta_time
-    velocity *= delta_time * 0.1  # Adjust the 0.1 to control scrolling speed
-
-    return velocity, tile_size
+    return velocity * 0.8, tile_size
 
 
 def main():
@@ -145,18 +106,18 @@ def main():
     running = True
 
     while running:
-        delta_time = clock.tick(FPS) / 1000.0  # Get delta_time in seconds
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
         window.fill((255, 255, 255))
         keys = pygame.key.get_pressed()
-        velocity, tile_size = handle_input(keys, velocity, tile_size, delta_time)
+        velocity, tile_size = handle_input(keys, velocity, tile_size)
 
-        # Update position based on velocity
-        position += velocity
+        if keys[pygame.K_SPACE]:
+            position += pygame.Vector2(round(velocity.x), round(velocity.y)) * 2
+        else:
+            position += pygame.Vector2(round(velocity.x), round(velocity.y))
 
         tile_iters = round(WIDTH / tile_size)
         for x in range(tile_iters + 1):
@@ -172,10 +133,9 @@ def main():
                 pygame.draw.rect(window, color, tile_rect)
 
         pygame.display.flip()
+        clock.tick(FPS)
 
     pygame.quit()
 
-
 if __name__ == "__main__":
     main()
-
