@@ -23,3 +23,4 @@ Based on heat, wetness, and elevation maps, the terrain is divided into biomes l
     - math (included)
 
 ## Demo
+![Demo](https://github.com/22yeets22/Terrain-Generator/blob/main/demo.png?raw=true "Demo")
