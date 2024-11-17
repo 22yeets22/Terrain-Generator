@@ -12,7 +12,7 @@ Based on heat, wetness, and elevation maps, the terrain is divided into biomes l
     - Custom Seeds: Generate terrains based on user-provided seeds for reproducibility.
  
 ## Controls
- - Move: WASD & arrow keys
+ - Move: `WASD` & arrow keys
  - Zoom: `Q` to zoom out, `E` to zoom in
 
 ## Requirements
