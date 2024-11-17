@@ -2,6 +2,8 @@
 ## A fun Pygame project you can interact with that uses Perlin noise.
 Based on heat, wetness, and elevation maps, the terrain is divided into biomes like deserts, grasslands, rainforests, mountains, and snow regions. Games like Minecraft inspire the project and demonstrates noise-based terrain generation with biomes.
 
+![Thumbnail](https://github.com/22yeets22/Terrain-Generator/blob/main/Terrain-Generator.png?raw=true "Thumbnail")
+
 ## Features
 - Perlin Noise Integration: Uses Perlin noise to create natural-looking terrains.
 - Dynamic Biomes: Biomes are determined by:
