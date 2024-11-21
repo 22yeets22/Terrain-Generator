@@ -5,6 +5,11 @@ TILE_SIZE_DEFAULT = 25
 MOVE_DIST = 0.3
 FPS = 30
 
+# Terrain Generation
+HEIGHT_MULT = 0.7
+HEIGHT_MAX = 2
+HEIGHT_MIN = -2
+
 # Biome definitions with ideal center points (heat, dryness)
 BIOMES = {
     "desert": {"center": (0.225, 0.3)},
@@ -12,16 +17,16 @@ BIOMES = {
     "rainforest": {"center": (-0.075, -0.425)},
     "arctic": {"center": (-0.5, 0.0)},
     "water": {"height": -0.25},
-    "mountain": {"height": 0.325},
-    "snow": {"height": 0.55}
+    "mountain": {"minheight": 0.3, "maxheight": 0.45, "height": 0.375},
+    "snow": {"height": 0.45}
 }
 
 BIOME_COLORS = {
-    "desert": (255, 220, 170),
-    "grasslands": (62, 220, 59),
-    "rainforest": (0, 128, 0),
-    "arctic": (200, 200, 255),
-    "water": (0, 60, 200),
-    "mountain": (140, 90, 80),
-    "snow": (255, 250, 250)
+    "desert": (255, 243, 148),
+    "grasslands": (181, 219, 147),
+    "rainforest": (30, 143, 30),
+    "arctic": (213, 213, 245),
+    "water": (69, 115, 222),
+    "mountain": (84, 63, 59),
+    "snow": (225, 239, 245)
 }
