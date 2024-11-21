@@ -5,20 +5,13 @@ import math
 from constants import *
 
 
-def get_seed(raw_seed):
-    """Convert raw seed input into a numeric seed."""
-    if raw_seed.isdigit():
-        return abs(int(raw_seed))
-    return sum(ord(char) for char in raw_seed)
-
-
-def generate_noise(seed):
+def generate_noise():
     """Initialize Perlin noise generators."""
     return {
-        "base1": PerlinNoise(octaves=3, seed=seed),
-        "base2": PerlinNoise(octaves=8, seed=seed),
-        "heatmap": PerlinNoise(octaves=1, seed=seed),
-        "wetmap": PerlinNoise(octaves=0.8, seed=seed),
+        "base1": PerlinNoise(octaves=2),
+        "base2": PerlinNoise(octaves=6),
+        "heatmap": PerlinNoise(octaves=0.8),
+        "wetmap": PerlinNoise(octaves=0.6),
     }
 
 
@@ -28,7 +21,7 @@ def calculate_noise(noise, position):
     n2 = noise["base2"](position)
     h = noise["heatmap"](position)
     w = noise["wetmap"](position)
-    return (n1 + n2 + (h + w) * 0.4) * 0.6, h, w
+    return max(min((n1 + n2) * HEIGHT_MULT, HEIGHT_MAX), HEIGHT_MIN), h, w
 
 
 def euclidean_distance(p1, p2):
@@ -36,29 +29,52 @@ def euclidean_distance(p1, p2):
     return math.sqrt(sum((a - b) ** 2 for a, b in zip(p1, p2)))
 
 
+def transform(x, in_min, in_max, out_min, out_max):
+    """Transform a value from one range to another."""
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
+
 def get_biome_weights(height, heat, dryness):
     """Calculate weights for each biome based on distance to their centers."""
-    # First handle height-based biomes
-    if height <= BIOMES["water"]["height"]:
-        return {"water": 1.0}
-    elif height >= BIOMES["snow"]["height"]:
-        return {"snow": 1.0}
-    elif BIOMES["mountain"]["height"] - 0.1 <= height <= BIOMES["mountain"]["height"] + 0.1:
-        return {"mountain": 1.0}
+    # Initialize weights with climate-based biomes
+    weights = {}
 
+    # Handle height-based biomes
+    if height <= BIOMES["water"]["height"]:
+        return {"water": transform(height, HEIGHT_MIN, BIOMES["water"]["height"], 0.3, 1.0)}
+    elif height >= BIOMES["snow"]["height"]:
+        return {"snow": transform(height, BIOMES["snow"]["height"], HEIGHT_MAX, 0.95, 1.0)}
+    elif BIOMES["mountain"]["minheight"] <= height <= BIOMES["mountain"]["maxheight"]:
+        return {"mountain": transform(height, BIOMES["mountain"]["minheight"], BIOMES["mountain"]["maxheight"], 0.85, 1.0)}
+    
     # Calculate distances to temperature/moisture-based biomes
     point = (heat, dryness)
-    distances = {
+    temp_distances = {
         biome: euclidean_distance(point, BIOMES[biome]["center"])
         for biome in ["desert", "grasslands", "rainforest", "arctic"]
     }
-    
     # Convert distances to weights using inverse square and avoid small values
-    total_weight = sum(1 / (d * d + 0.01) for d in distances.values())
-    weights = {
-        biome: (1 / (dist * dist + 0.01)) / total_weight
-        for biome, dist in distances.items() if (1 / (dist * dist + 0.01)) > 0.1
+    temp_total_weight = sum(1 / (d * d + 0.01) for d in temp_distances.values())
+    temp_climate_weights = {
+        biome: (1 / (dist * dist + 0.01)) / temp_total_weight
+        for biome, dist in temp_distances.items()
     }
+
+    """
+    height_distances = {
+        biome: abs(height - BIOMES[biome]["height"])
+        for biome in ["water", "mountain", "snow"]
+    }
+    # Convert distances to weights using inverse square and avoid small values
+    height_total_weight = sum(1 / (d ** 4 + 0.01) for d in height_distances.values())
+    height_climate_weights = {
+        biome: (1 / (dist ** 4 + 0.01)) / height_total_weight
+        for biome, dist in height_distances.items()
+    }"""
+
+    # Append climate-based biomes to existing weights
+    weights.update(temp_climate_weights)
+    # weights.update(height_climate_weights)
 
     return weights
 
@@ -71,7 +87,8 @@ def blend_colors(weights):
         r += color[0] * weight
         g += color[1] * weight
         b += color[2] * weight
-    return (int(r), int(g), int(b))
+    max_color = max(r, g, b)
+    return (int(r / max_color * 255), int(g / max_color * 255), int(b / max_color * 255))
 
 
 def handle_input(keys, velocity, tile_size):
@@ -96,9 +113,7 @@ def main():
     window = pygame.display.set_mode((WIDTH, WIDTH))
     pygame.display.set_caption("Terrain Generator")
     
-    raw_seed = input("Enter a seed: ")
-    seed = get_seed(raw_seed)
-    noise = generate_noise(seed)
+    noise = generate_noise()
     tile_size = TILE_SIZE_DEFAULT
     position = pygame.Vector2()
     velocity = pygame.Vector2()
